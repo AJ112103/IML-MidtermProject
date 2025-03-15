@@ -6,12 +6,24 @@ def softmax(z):
     exp_z = np.exp(z_stable)
     return exp_z / np.sum(exp_z, axis=1, keepdims=True)
 
-def compute_loss_and_gradients(X, y_onehot, W, lambda_reg):
+def compute_class_weights(y, k=3):
+    classes = np.unique(y)
+    weights = {}
+    total = len(y)
+    for cls in classes:
+        count = np.sum(y == cls)
+        weights[cls] = total / (k * count)
+    weights[0] *= 2.0
+    weight_vector = np.array([weights[-1], weights[0], weights[1]])
+    return weight_vector
+
+def compute_loss_and_gradients(X, y_onehot, W, lambda_reg, class_weights):
     m = X.shape[0]
     z = np.dot(X, W)
     probs = softmax(z)
-    loss = -np.sum(y_onehot * np.log(probs + 1e-8)) / m + (lambda_reg / 2) * np.sum(W * W)
-    grad = np.dot(X.T, (probs - y_onehot)) / m + lambda_reg * W
+    weighted_log = y_onehot * np.log(probs + 1e-8) * class_weights[np.newaxis, :]
+    loss = -np.sum(weighted_log) / m + (lambda_reg / 2) * np.sum(W * W)
+    grad = np.dot(X.T, ((probs - y_onehot) * class_weights[np.newaxis, :])) / m + lambda_reg * W
     return loss, grad
 
 def train_logistic_regression(X, y, num_epochs=3000, learning_rate=0.0005, lambda_reg=0.001, beta=0.9):
@@ -21,10 +33,11 @@ def train_logistic_regression(X, y, num_epochs=3000, learning_rate=0.0005, lambd
     W = np.random.randn(d + 1, k) * 0.01
     y_indices = np.where(y == -1, 0, np.where(y == 0, 1, 2))
     y_onehot = np.eye(k)[y_indices]
+    class_weights = compute_class_weights(y)
     losses = []
     v = np.zeros_like(W)
     for epoch in range(num_epochs):
-        loss, grad = compute_loss_and_gradients(X_bias, y_onehot, W, lambda_reg)
+        loss, grad = compute_loss_and_gradients(X_bias, y_onehot, W, lambda_reg, class_weights)
         v = beta * v + learning_rate * grad
         W -= v
         losses.append(loss)

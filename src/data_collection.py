@@ -14,7 +14,6 @@ async def fetch_orderbook_binance_async(session, symbol="BTCUSDT", limit=100):
     return data
 
 def save_raw_orderbook(data, symbol, folder="data/raw"):
-
     ts = int(time.time() * 1000)
     os.makedirs(folder, exist_ok=True)
     filename = os.path.join(folder, f"{symbol}_orderbook_{ts}.json")
@@ -22,14 +21,12 @@ def save_raw_orderbook(data, symbol, folder="data/raw"):
         json.dump(data, f)
     print(f"Saved {symbol} orderbook to {filename}")
 
-async def collect_all_asset_async(assets=["BTCUSDT", "ETHUSDT"], folder="data/raw"):
-
+async def collect_all_asset_async(assets=["BTCUSDT", "ETHUSDT", "BNBUSDT", "XRPUSDT", "LTCUSDT"], folder="data/raw"):
     async with aiohttp.ClientSession() as session:
         tasks = []
         for symbol in assets:
             task = asyncio.create_task(fetch_orderbook_binance_async(session, symbol))
             tasks.append((symbol, task))
-
         for symbol, task in tasks:
             try:
                 data = await task
@@ -37,6 +34,12 @@ async def collect_all_asset_async(assets=["BTCUSDT", "ETHUSDT"], folder="data/ra
             except Exception as e:
                 print(f"Error fetching data for {symbol}: {e}")
 
-if __name__ == "__main__":
+async def main():
     assets_list = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "XRPUSDT", "LTCUSDT"]
-    asyncio.run(collect_all_asset_async(assets=assets_list))
+    while True:
+        await collect_all_asset_async(assets=assets_list)
+        # Wait for 60 seconds before fetching the next set of snapshots (adjust as needed)
+        await asyncio.sleep(60)
+
+if __name__ == "__main__":
+    asyncio.run(main())

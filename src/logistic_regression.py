@@ -14,23 +14,28 @@ def compute_loss_and_gradients(X, y_onehot, W, lambda_reg):
     grad = np.dot(X.T, (probs - y_onehot)) / m + lambda_reg * W
     return loss, grad
 
-def train_logistic_regression(X, y, num_epochs=3000, learning_rate=0.001, lambda_reg=0.001):
+def train_logistic_regression(X, y, num_epochs=3000, learning_rate=0.0005, lambda_reg=0.001, beta=0.9):
     m, d = X.shape
     k = 3
-    W = np.random.randn(d, k) * 0.01
+    X_bias = np.concatenate([np.ones((m, 1)), X], axis=1)
+    W = np.random.randn(d + 1, k) * 0.01
     y_indices = np.where(y == -1, 0, np.where(y == 0, 1, 2))
     y_onehot = np.eye(k)[y_indices]
     losses = []
+    v = np.zeros_like(W)
     for epoch in range(num_epochs):
-        loss, grad = compute_loss_and_gradients(X, y_onehot, W, lambda_reg)
-        W -= learning_rate * grad
+        loss, grad = compute_loss_and_gradients(X_bias, y_onehot, W, lambda_reg)
+        v = beta * v + learning_rate * grad
+        W -= v
         losses.append(loss)
         if epoch % 300 == 0:
             print(f"Epoch {epoch}: Loss = {loss:.4f}")
     return W, losses
 
 def predict(X, W):
-    z = np.dot(X, W)
+    m = X.shape[0]
+    X_bias = np.concatenate([np.ones((m, 1)), X], axis=1)
+    z = np.dot(X_bias, W)
     probs = softmax(z)
     preds_indices = np.argmax(probs, axis=1)
     preds = np.where(preds_indices == 0, -1, np.where(preds_indices == 1, 0, 1))
@@ -53,7 +58,7 @@ if __name__ == "__main__":
     y_test = test_df["label"].values
     X_train, mu, sigma = normalize_features(X_train)
     X_test = (X_test - mu) / sigma
-    W, losses = train_logistic_regression(X_train, y_train, num_epochs=3000, learning_rate=0.001, lambda_reg=0.001)
+    W, losses = train_logistic_regression(X_train, y_train, num_epochs=3000, learning_rate=0.0005, lambda_reg=0.001, beta=0.9)
     train_preds = predict(X_train, W)
     train_accuracy = np.mean(train_preds == y_train)
     print(f"Training Accuracy: {train_accuracy * 100:.2f}%")

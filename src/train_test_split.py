@@ -28,8 +28,8 @@ def train_test_split(df, train_frac=0.7, random_split=True, random_seed=42):
     return train_df, test_df
 
 if __name__ == "__main__":
-    df_features = pd.read_csv("data/processed/features_orderbooks.csv", parse_dates=["timestamp"])
-    df_labeled = generate_labels(df_features, horizon=3, threshold=0.00005)
+    df_features = pd.read_csv("data/processed/enhanced_features_orderbooks.csv", parse_dates=["timestamp"])
+    df_labeled = generate_labels(df_features, horizon=3, threshold=0.0005)
     train_df, test_df = train_test_split(df_labeled, train_frac=0.7, random_split=True)
     os.makedirs("data/processed", exist_ok=True)
     train_df.to_csv("data/processed/train_data.csv", index=False)

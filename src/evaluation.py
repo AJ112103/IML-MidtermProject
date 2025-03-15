@@ -7,7 +7,9 @@ def softmax(z):
     return exp_z / np.sum(exp_z, axis=1, keepdims=True)
 
 def predict(X, W):
-    z = np.dot(X, W)
+    m = X.shape[0]
+    X_bias = np.concatenate([np.ones((m, 1)), X], axis=1)
+    z = np.dot(X_bias, W)
     probs = softmax(z)
     preds_indices = np.argmax(probs, axis=1)
     preds = np.where(preds_indices == 0, -1, np.where(preds_indices == 1, 0, 1))
@@ -33,7 +35,6 @@ def compute_classification_metrics(cm, classes=[-1, 0, 1]):
     precision = {}
     recall = {}
     f1_score = {}
-
     for i, cls in enumerate(classes):
         TP = cm[i, i]
         FP = np.sum(cm[:, i]) - TP
@@ -44,27 +45,20 @@ def compute_classification_metrics(cm, classes=[-1, 0, 1]):
     return precision, recall, f1_score
 
 if __name__ == "__main__":
-
     df_test = pd.read_csv("data/processed/test_data.csv", parse_dates=["timestamp"])
     features = ["mid_price", "spread", "volume_imbalance", "rolling_volatility"]
     df_test = df_test.dropna(subset=features + ["label"])
     X_test = df_test[features].values
     y_test = df_test["label"].values
-
     W, mu, sigma = load_model()
     X_test_norm = normalize_features(X_test, mu, sigma)
-
     preds = predict(X_test_norm, W)
-
     accuracy = np.mean(preds == y_test)
     print(f"Test Accuracy: {accuracy * 100:.2f}%")
-
     classes = [-1, 0, 1]
     cm = compute_confusion_matrix(y_test, preds, classes=classes)
     print("Confusion Matrix:")
-    df_cm = pd.DataFrame(cm, index=classes, columns=classes)
-    print(df_cm)
-
+    print(pd.DataFrame(cm, index=classes, columns=classes))
     precision, recall, f1_score = compute_classification_metrics(cm, classes=classes)
     print("\nClassification Metrics:")
     print("Class\tPrecision\tRecall\t\tF1-Score")

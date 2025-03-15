@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 
-def generate_labels(df, horizon=3, threshold=0.00005):
+def generate_labels(df, horizon=3, threshold=0.0005):
     df = df.sort_values(by=["symbol", "timestamp"]).copy()
     def compute_label(group):
         group["future_mid"] = group["mid_price"].shift(-horizon)

@@ -7,6 +7,14 @@ def relu(Z):
 def relu_derivative(Z):
     return (Z > 0).astype(float)
 
+def apply_dropout(A, p_drop):
+
+    if p_drop <= 0.0:
+        return A
+    mask = (np.random.rand(*A.shape) > p_drop).astype(float)
+    A_dropped = (mask * A) / (1.0 - p_drop)
+    return A_dropped
+
 def softmax(Z):
     Z_stable = Z - np.max(Z, axis=1, keepdims=True)
     expZ = np.exp(Z_stable)
@@ -25,33 +33,39 @@ def initialize_parameters(n_x, n_h1, n_h2, n_h3, n_h4, n_y):
     b5 = np.zeros((1, n_y))
     return W1, b1, W2, b2, W3, b3, W4, b4, W5, b5
 
-def forward_propagation(X, W1, b1, W2, b2, W3, b3, W4, b4, W5, b5):
+def forward_propagation(X, W1, b1, W2, b2, W3, b3, W4, b4, W5, b5, p_drop=0.2):
+
     Z1 = np.dot(X, W1) + b1
     A1 = relu(Z1)
+    A1 = apply_dropout(A1, p_drop)
+
     Z2 = np.dot(A1, W2) + b2
     A2 = relu(Z2)
+    A2 = apply_dropout(A2, p_drop)
+
     Z3 = np.dot(A2, W3) + b3
     A3 = relu(Z3)
+    A3 = apply_dropout(A3, p_drop)
+
     Z4 = np.dot(A3, W4) + b4
     A4 = relu(Z4)
+    A4 = apply_dropout(A4, p_drop)
+
     Z5 = np.dot(A4, W5) + b5
     A5 = softmax(Z5)
     cache = (Z1, A1, Z2, A2, Z3, A3, Z4, A4, Z5, A5)
     return A5, cache
 
 def compute_cost(A5, Y, Ws, lambda_reg):
-
     m = Y.shape[0]
     cost = -np.sum(Y * np.log(A5 + 1e-8)) / m
     l2_sum = sum([np.sum(W*W) for W in Ws])
     cost += (lambda_reg / 2) * l2_sum
     return cost
 
-def backward_propagation(X, Y, cache, Ws, bs, lambda_reg):
-
+def backward_propagation(X, Y, cache, Ws, bs, lambda_reg, p_drop=0.2):
     m = X.shape[0]
     (Z1, A1, Z2, A2, Z3, A3, Z4, A4, Z5, A5) = cache
-
     W1, W2, W3, W4, W5 = Ws
 
     dZ5 = A5 - Y
@@ -82,7 +96,6 @@ def backward_propagation(X, Y, cache, Ws, bs, lambda_reg):
     return grads
 
 def update_parameters(params, grads, learning_rate, beta, v):
-
     (dW1, db1, dW2, db2, dW3, db3, dW4, db4, dW5, db5) = grads
 
     for key, dval in zip(["W1","b1","W2","b2","W3","b3","W4","b4","W5","b5"],
@@ -99,29 +112,31 @@ def one_hot_encode(y):
 def model(X, y,
           n_h1=256, n_h2=256, n_h3=256, n_h4=256,
           num_epochs=20000,
-          learning_rate=0.001,
+          learning_rate=0.0005,   
           lambda_reg=0.001,
+          p_drop=0.2,            
           beta=0.9,
           print_cost=True):
     n_x = X.shape[1]
     n_y = 3
 
-    (W1, b1, W2, b2, W3, b3, W4, b4, W5, b5) = initialize_parameters(n_x, n_h1, n_h2, n_h3, n_h4, n_y)
-    params = {"W1":W1, "b1":b1, "W2":W2, "b2":b2, "W3":W3, "b3":b3, "W4":W4, "b4":b4, "W5":W5, "b5":b5}
-
+    (W1,b1,W2,b2,W3,b3,W4,b4,W5,b5) = initialize_parameters(n_x,n_h1,n_h2,n_h3,n_h4,n_y)
+    params = {"W1":W1,"b1":b1,"W2":W2,"b2":b2,"W3":W3,"b3":b3,"W4":W4,"b4":b4,"W5":W5,"b5":b5}
     Y = one_hot_encode(y)
-    costs = []
 
+    costs = []
     v = {key: np.zeros_like(params[key]) for key in params}
 
     for epoch in range(num_epochs):
-        A5, cache = forward_propagation(X, **params)
+        A5, cache = forward_propagation(X, **params, p_drop=p_drop)
         Ws = [params["W1"], params["W2"], params["W3"], params["W4"], params["W5"]]
         cost = compute_cost(A5, Y, Ws, lambda_reg)
         grads = backward_propagation(X, Y, cache, Ws,
                                      [params["b1"], params["b2"], params["b3"], params["b4"], params["b5"]],
-                                     lambda_reg)
+                                     lambda_reg,
+                                     p_drop=p_drop)
         params, v = update_parameters(params, grads, learning_rate, beta, v)
+
         if epoch % 2000 == 0:
             costs.append(cost)
             if print_cost:
@@ -130,7 +145,7 @@ def model(X, y,
     return params, costs
 
 def predict_deep_mlp(X, params):
-    A5, _ = forward_propagation(X, **params)
+    A5, _ = forward_propagation(X, **params, p_drop=0.0)
     preds_indices = np.argmax(A5, axis=1)
     preds = np.where(preds_indices == 0, -1, np.where(preds_indices == 1, 0, 1))
     return preds
@@ -159,8 +174,9 @@ if __name__ == "__main__":
     params, costs = model(X_train, y_train,
                           n_h1=256, n_h2=256, n_h3=256, n_h4=256,
                           num_epochs=20000,
-                          learning_rate=0.001,
+                          learning_rate=0.0005,  # lower LR
                           lambda_reg=0.001,
+                          p_drop=0.2,
                           beta=0.9,
                           print_cost=True)
 

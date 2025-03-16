@@ -3,18 +3,26 @@ import pandas as pd
 from deep_mlp import predict_deep_mlp
 
 def load_deep_mlp_model():
-    parameters = {}
-    parameters["W1"] = np.load("data/processed/deep_mlp_W1.npy")
-    parameters["b1"] = np.load("data/processed/deep_mlp_b1.npy")
-    parameters["W2"] = np.load("data/processed/deep_mlp_W2.npy")
-    parameters["b2"] = np.load("data/processed/deep_mlp_b2.npy")
-    parameters["W3"] = np.load("data/processed/deep_mlp_W3.npy")
-    parameters["b3"] = np.load("data/processed/deep_mlp_b3.npy")
-    parameters["W4"] = np.load("data/processed/deep_mlp_W4.npy")
-    parameters["b4"] = np.load("data/processed/deep_mlp_b4.npy")
+    params = {}
+    params["W1"] = np.load("data/processed/deep_mlp_W1.npy")
+    params["b1"] = np.load("data/processed/deep_mlp_b1.npy")
+
+    params["W2"] = np.load("data/processed/deep_mlp_W2.npy")
+    params["b2"] = np.load("data/processed/deep_mlp_b2.npy")
+
+    params["W3"] = np.load("data/processed/deep_mlp_W3.npy")
+    params["b3"] = np.load("data/processed/deep_mlp_b3.npy")
+
+    params["W4"] = np.load("data/processed/deep_mlp_W4.npy")
+    params["b4"] = np.load("data/processed/deep_mlp_b4.npy")
+
+    params["W5"] = np.load("data/processed/deep_mlp_W5.npy")
+    params["b5"] = np.load("data/processed/deep_mlp_b5.npy")
+
     mu = np.load("data/processed/deep_mlp_feature_mu.npy")
     sigma = np.load("data/processed/deep_mlp_feature_sigma.npy")
-    return parameters, mu, sigma
+    return params, mu, sigma
+
 
 def compute_confusion_matrix(y_true, y_pred, classes=[-1, 0, 1]):
     cm = np.zeros((len(classes), len(classes)), dtype=int)

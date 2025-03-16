@@ -19,39 +19,34 @@ def compute_loss_and_gradients(X, y_onehot, W, lambda_reg, class_weights):
 
     return loss, grad
 
-def compute_class_weights(y, neg_weight=1.0, zero_weight=1.0, pos_weight=1.5):
+def compute_class_weights(y, neg_weight=1.5, zero_weight=1.0, pos_weight=2.0):
 
-    weight_vector = np.array([neg_weight, zero_weight, pos_weight])
-    return weight_vector
+    return np.array([neg_weight, zero_weight, pos_weight])
 
 def train_logistic_regression(X, y,
                               num_epochs=10000,
                               learning_rate=0.001,
-                              lambda_reg=0.001,
-                              neg_weight=1.0,
+                              lambda_reg=0.0005,  
+                              neg_weight=1.5,
                               zero_weight=1.0,
-                              pos_weight=1.5):
+                              pos_weight=2.0):
     m, d = X.shape
     k = 3
-    # Add bias column
     X_bias = np.concatenate([np.ones((m, 1)), X], axis=1)
     W = np.random.randn(d + 1, k) * 0.01
 
-    # Convert y to one-hot
     y_indices = np.where(y == -1, 0, np.where(y == 0, 1, 2))
     y_onehot = np.eye(k)[y_indices]
 
-    # Weighted classes, pushing model to predict +1 more easily
     class_weights = compute_class_weights(y, neg_weight, zero_weight, pos_weight)
 
-    losses = []
     for epoch in range(num_epochs):
         loss, grad = compute_loss_and_gradients(X_bias, y_onehot, W, lambda_reg, class_weights)
         W -= learning_rate * grad
-        losses.append(loss)
         if epoch % 1000 == 0:
             print(f"Epoch {epoch}: Loss = {loss:.4f}")
-    return W, losses
+
+    return W, loss
 
 def predict(X, W):
     m = X.shape[0]
@@ -83,15 +78,14 @@ if __name__ == "__main__":
     X_train, mu, sigma = normalize_features(X_train)
     X_test = (X_test - mu) / sigma
 
-    # Hard-coded heavier weight for +1
-    W, losses = train_logistic_regression(
+    W, final_loss = train_logistic_regression(
         X_train, y_train,
         num_epochs=10000,
         learning_rate=0.001,
-        lambda_reg=0.001,
-        neg_weight=1.0,
+        lambda_reg=0.0005,
+        neg_weight=1.5,
         zero_weight=1.0,
-        pos_weight=1.5  
+        pos_weight=2.0
     )
 
     train_preds = predict(X_train, W)

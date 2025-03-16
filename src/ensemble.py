@@ -20,15 +20,23 @@ def load_deep_mlp_model():
     params = {}
     params["W1"] = np.load("data/processed/deep_mlp_W1.npy")
     params["b1"] = np.load("data/processed/deep_mlp_b1.npy")
+
     params["W2"] = np.load("data/processed/deep_mlp_W2.npy")
     params["b2"] = np.load("data/processed/deep_mlp_b2.npy")
+
     params["W3"] = np.load("data/processed/deep_mlp_W3.npy")
     params["b3"] = np.load("data/processed/deep_mlp_b3.npy")
+
     params["W4"] = np.load("data/processed/deep_mlp_W4.npy")
     params["b4"] = np.load("data/processed/deep_mlp_b4.npy")
+
+    params["W5"] = np.load("data/processed/deep_mlp_W5.npy")
+    params["b5"] = np.load("data/processed/deep_mlp_b5.npy")
+
     mu = np.load("data/processed/deep_mlp_feature_mu.npy")
     sigma = np.load("data/processed/deep_mlp_feature_sigma.npy")
     return params, mu, sigma
+
 
 def ensemble_predict(X):
     # Logistic Regression predictions:

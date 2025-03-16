@@ -6,7 +6,7 @@ def softmax(z):
     exp_z = np.exp(z_stable)
     return exp_z / np.sum(exp_z, axis=1, keepdims=True)
 
-def random_fourier_features(X, D=500, gamma=0.001, seed=42):
+def random_fourier_features(X, D=800, gamma=0.0002, seed=1234):
     np.random.seed(seed)
     n, d = X.shape
     W_r = np.random.randn(d, D) * np.sqrt(2 * gamma)
@@ -33,7 +33,7 @@ def compute_loss_and_gradients(X, y_onehot, W, lambda_reg):
 def train_logistic_regression(X, y,
                               num_epochs=10000,
                               learning_rate=0.001,
-                              lambda_reg=0.001):
+                              lambda_reg=0.0005):
     m, d = X.shape
     k = 3
     X_bias = np.concatenate([np.ones((m,1)), X], axis=1)
@@ -42,14 +42,12 @@ def train_logistic_regression(X, y,
     y_indices = np.where(y==-1, 0, np.where(y==0, 1, 2))
     y_onehot = np.eye(k)[y_indices]
 
-    losses = []
     for epoch in range(num_epochs):
         loss, grad = compute_loss_and_gradients(X_bias, y_onehot, W, lambda_reg)
         W -= learning_rate * grad
-        losses.append(loss)
         if epoch % 1000 == 0:
             print(f"Epoch {epoch}: Loss = {loss:.4f}")
-    return W, losses
+    return W, loss
 
 def predict(X, W):
     m = X.shape[0]
@@ -61,10 +59,10 @@ def predict(X, W):
     return preds
 
 if __name__ == "__main__":
-    
-    D = 500         
-    gamma = 0.0005  
-    seed = 1337     
+    # Attempt new gamma=0.0002, more features=800, random_seed=1234
+    D = 800
+    gamma = 0.0002
+    seed = 1234
 
     train_df = pd.read_csv("data/processed/train_data.csv", parse_dates=["timestamp"])
     test_df = pd.read_csv("data/processed/test_data.csv", parse_dates=["timestamp"])
@@ -78,16 +76,18 @@ if __name__ == "__main__":
     X_test = test_df[features].values
     y_test = test_df["label"].values
 
+    # Normalize
     X_train, mu, sigma = normalize_features(X_train)
     X_test = (X_test - mu) / sigma
 
+    # Random Fourier transform
     Z_train = random_fourier_features(X_train, D=D, gamma=gamma, seed=seed)
     Z_test = random_fourier_features(X_test,  D=D, gamma=gamma, seed=seed)
 
-    W, losses = train_logistic_regression(Z_train, y_train,
-                                          num_epochs=10000,
-                                          learning_rate=0.001,
-                                          lambda_reg=0.001)
+    W, final_loss = train_logistic_regression(Z_train, y_train,
+                                              num_epochs=10000,
+                                              learning_rate=0.001,
+                                              lambda_reg=0.0005)
 
     train_preds = predict(Z_train, W)
     train_accuracy = np.mean(train_preds == y_train)

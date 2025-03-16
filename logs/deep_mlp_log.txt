@@ -1,0 +1,13 @@
+Epoch 0: Cost = 2.9164
+Epoch 2000: Cost = 2.1474
+Epoch 4000: Cost = 2.0872
+Epoch 6000: Cost = 2.0762
+Epoch 8000: Cost = 2.0382
+Epoch 10000: Cost = 2.0166
+Epoch 12000: Cost = 2.0166
+Epoch 14000: Cost = 2.0026
+Epoch 16000: Cost = 1.9954
+Epoch 18000: Cost = 1.9797
+Training Accuracy: 54.20%
+Test Accuracy: 50.99%
+Deep MLP model training complete and parameters saved.

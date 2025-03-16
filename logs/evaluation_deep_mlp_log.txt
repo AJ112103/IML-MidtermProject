@@ -1,0 +1,11 @@
+Test Accuracy: 50.99%
+Confusion Matrix:
+[[ 26 238  57]
+ [ 27 532  58]
+ [ 16 198  60]]
+
+Classification Metrics:
+Class	Prec	Recall	F1
+-1	0.38	0.08	0.13
+0	0.55	0.86	0.67
+1	0.34	0.22	0.27

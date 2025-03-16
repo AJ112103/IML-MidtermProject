@@ -1,0 +1,9 @@
+    symbol               timestamp  ...  best_ask_price  best_ask_qty
+0  ETHUSDT 2025-03-15 20:08:40.875  ...       1946.3100      60.99190
+1  XRPUSDT 2025-03-15 19:03:15.840  ...          2.4016    4591.00000
+2  XRPUSDT 2025-03-16 00:40:06.101  ...          2.3966   13401.00000
+3  BTCUSDT 2025-03-16 06:52:29.578  ...      84277.2100       2.05721
+4  BTCUSDT 2025-03-16 07:24:38.938  ...      84200.4000       3.87762
+
+[5 rows x 6 columns]
+Cleaned data saved to data/processed/clean_orderbooks.csv

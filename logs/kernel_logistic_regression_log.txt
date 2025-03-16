@@ -1,0 +1,13 @@
+Epoch 0: Loss = 1.1047
+Epoch 1000: Loss = 1.0270
+Epoch 2000: Loss = 1.0089
+Epoch 3000: Loss = 1.0049
+Epoch 4000: Loss = 1.0040
+Epoch 5000: Loss = 1.0038
+Epoch 6000: Loss = 1.0037
+Epoch 7000: Loss = 1.0037
+Epoch 8000: Loss = 1.0037
+Epoch 9000: Loss = 1.0036
+Training Accuracy: 54.55%
+Test Accuracy: 50.91%
+Kernel model training complete and parameters saved.

@@ -6,6 +6,15 @@ def softmax(z):
     exp_z = np.exp(z_stable)
     return exp_z / np.sum(exp_z, axis=1, keepdims=True)
 
+def compute_loss_and_gradients(X, y_onehot, W, lambda_reg, class_weights):
+    m = X.shape[0]
+    z = np.dot(X, W)
+    probs = softmax(z)
+    weighted_log = y_onehot * np.log(probs + 1e-8) * class_weights[np.newaxis, :]
+    loss = -np.sum(weighted_log) / m + (lambda_reg / 2) * np.sum(W * W)
+    grad = np.dot(X.T, ((probs - y_onehot) * class_weights[np.newaxis, :])) / m + lambda_reg * W
+    return loss, grad
+
 def compute_class_weights(y, k=3):
     classes = np.unique(y)
     weights = {}
@@ -16,16 +25,7 @@ def compute_class_weights(y, k=3):
     weight_vector = np.array([weights[-1], weights[0], weights[1]])
     return weight_vector
 
-def compute_loss_and_gradients(X, y_onehot, W, lambda_reg, class_weights):
-    m = X.shape[0]
-    z = np.dot(X, W)
-    probs = softmax(z)
-    weighted_log = y_onehot * np.log(probs + 1e-8) * class_weights[np.newaxis, :]
-    loss = -np.sum(weighted_log) / m + (lambda_reg / 2) * np.sum(W * W)
-    grad = np.dot(X.T, ((probs - y_onehot) * class_weights[np.newaxis, :])) / m + lambda_reg * W
-    return loss, grad
-
-def train_logistic_regression(X, y, num_epochs=3000, learning_rate=0.0005, lambda_reg=0.001, beta=0.9):
+def train_logistic_regression(X, y, num_epochs=10000, learning_rate=0.001, lambda_reg=0.001):
     m, d = X.shape
     k = 3
     X_bias = np.concatenate([np.ones((m, 1)), X], axis=1)
@@ -34,13 +34,11 @@ def train_logistic_regression(X, y, num_epochs=3000, learning_rate=0.0005, lambd
     y_onehot = np.eye(k)[y_indices]
     class_weights = compute_class_weights(y)
     losses = []
-    v = np.zeros_like(W)
     for epoch in range(num_epochs):
         loss, grad = compute_loss_and_gradients(X_bias, y_onehot, W, lambda_reg, class_weights)
-        v = beta * v + learning_rate * grad
-        W -= v
+        W -= learning_rate * grad
         losses.append(loss)
-        if epoch % 300 == 0:
+        if epoch % 1000 == 0:
             print(f"Epoch {epoch}: Loss = {loss:.4f}")
     return W, losses
 
@@ -70,7 +68,7 @@ if __name__ == "__main__":
     y_test = test_df["label"].values
     X_train, mu, sigma = normalize_features(X_train)
     X_test = (X_test - mu) / sigma
-    W, losses = train_logistic_regression(X_train, y_train, num_epochs=3000, learning_rate=0.0005, lambda_reg=0.001, beta=0.9)
+    W, losses = train_logistic_regression(X_train, y_train, num_epochs=10000, learning_rate=0.001, lambda_reg=0.001)
     train_preds = predict(X_train, W)
     train_accuracy = np.mean(train_preds == y_train)
     print(f"Training Accuracy: {train_accuracy * 100:.2f}%")

@@ -6,11 +6,12 @@ def softmax(z):
     exp_z = np.exp(z_stable)
     return exp_z / np.sum(exp_z, axis=1, keepdims=True)
 
-def random_fourier_features(X, D=500, gamma=0.001):
+def random_fourier_features(X, D=500, gamma=0.001, seed=42):
+    np.random.seed(seed)
     n, d = X.shape
     W_r = np.random.randn(d, D) * np.sqrt(2 * gamma)
     b = np.random.uniform(0, 2*np.pi, size=(D,))
-    Z = np.sqrt(2/D) * np.cos(np.dot(X, W_r) + b)
+    Z = np.sqrt(2 / D) * np.cos(np.dot(X, W_r) + b)
     return Z
 
 def normalize_features(X):
@@ -22,17 +23,25 @@ def compute_loss_and_gradients(X, y_onehot, W, lambda_reg):
     m = X.shape[0]
     z = np.dot(X, W)
     probs = softmax(z)
-    loss = -np.sum(y_onehot * np.log(probs + 1e-8)) / m + (lambda_reg/2)*np.sum(W*W)
-    grad = np.dot(X.T, (probs - y_onehot)) / m + lambda_reg * W
+    loss = -np.sum(y_onehot * np.log(probs + 1e-8)) / m
+    loss += (lambda_reg/2)*np.sum(W*W)
+
+    grad = np.dot(X.T, (probs - y_onehot)) / m
+    grad += lambda_reg * W
     return loss, grad
 
-def train_logistic_regression(X, y, num_epochs=10000, learning_rate=0.001, lambda_reg=0.001):
+def train_logistic_regression(X, y,
+                              num_epochs=10000,
+                              learning_rate=0.001,
+                              lambda_reg=0.001):
     m, d = X.shape
     k = 3
     X_bias = np.concatenate([np.ones((m,1)), X], axis=1)
     W = np.random.randn(d+1, k)*0.01
+
     y_indices = np.where(y==-1, 0, np.where(y==0, 1, 2))
     y_onehot = np.eye(k)[y_indices]
+
     losses = []
     for epoch in range(num_epochs):
         loss, grad = compute_loss_and_gradients(X_bias, y_onehot, W, lambda_reg)
@@ -52,26 +61,42 @@ def predict(X, W):
     return preds
 
 if __name__ == "__main__":
+    
+    D = 500         
+    gamma = 0.0005  
+    seed = 1337     
+
     train_df = pd.read_csv("data/processed/train_data.csv", parse_dates=["timestamp"])
     test_df = pd.read_csv("data/processed/test_data.csv", parse_dates=["timestamp"])
     features = ["mid_price", "spread", "volume_imbalance", "rolling_volatility"]
-    train_df = train_df.dropna(subset=features+["label"])
-    test_df = test_df.dropna(subset=features+["label"])
+
+    train_df = train_df.dropna(subset=features + ["label"])
+    test_df = test_df.dropna(subset=features + ["label"])
+
     X_train = train_df[features].values
     y_train = train_df["label"].values
     X_test = test_df[features].values
     y_test = test_df["label"].values
+
     X_train, mu, sigma = normalize_features(X_train)
     X_test = (X_test - mu) / sigma
-    Z_train = random_fourier_features(X_train, D=500, gamma=0.001)
-    Z_test = random_fourier_features(X_test, D=500, gamma=0.001)
-    W, losses = train_logistic_regression(Z_train, y_train, num_epochs=10000, learning_rate=0.001, lambda_reg=0.001)
+
+    Z_train = random_fourier_features(X_train, D=D, gamma=gamma, seed=seed)
+    Z_test = random_fourier_features(X_test,  D=D, gamma=gamma, seed=seed)
+
+    W, losses = train_logistic_regression(Z_train, y_train,
+                                          num_epochs=10000,
+                                          learning_rate=0.001,
+                                          lambda_reg=0.001)
+
     train_preds = predict(Z_train, W)
     train_accuracy = np.mean(train_preds == y_train)
     print(f"Training Accuracy: {train_accuracy * 100:.2f}%")
+
     test_preds = predict(Z_test, W)
     test_accuracy = np.mean(test_preds == y_test)
     print(f"Test Accuracy: {test_accuracy * 100:.2f}%")
+
     np.save("data/processed/kernel_model_weights.npy", W)
     np.save("data/processed/kernel_feature_mu.npy", mu)
     np.save("data/processed/kernel_feature_sigma.npy", sigma)

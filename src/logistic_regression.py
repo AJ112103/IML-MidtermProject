@@ -13,8 +13,6 @@ def compute_class_weights(y, k=3):
     for cls in classes:
         count = np.sum(y == cls)
         weights[cls] = total / (k * count)
-    # Increase weight for the neutral class (0) further
-    weights[0] *= 3.0
     weight_vector = np.array([weights[-1], weights[0], weights[1]])
     return weight_vector
 

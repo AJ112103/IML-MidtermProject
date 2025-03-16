@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 
-def generate_labels(df, horizon=3, threshold=0.0005):
+def generate_labels(df, horizon=3, threshold=0.0003):
     df = df.sort_values(by=["symbol", "timestamp"]).copy()
     def compute_label(group):
         group["future_mid"] = group["mid_price"].shift(-horizon)
@@ -29,7 +29,7 @@ def train_test_split(df, train_frac=0.7, random_split=True, random_seed=42):
 
 if __name__ == "__main__":
     df_features = pd.read_csv("data/processed/enhanced_features_orderbooks.csv", parse_dates=["timestamp"])
-    df_labeled = generate_labels(df_features, horizon=3, threshold=0.0005)
+    df_labeled = generate_labels(df_features, horizon=3, threshold=0.0003)
     train_df, test_df = train_test_split(df_labeled, train_frac=0.7, random_split=True)
     os.makedirs("data/processed", exist_ok=True)
     train_df.to_csv("data/processed/train_data.csv", index=False)

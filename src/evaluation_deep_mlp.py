@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from deep_mlp import predict_deep_mlp, normalize_features
+from deep_mlp import predict_deep_mlp
 
 def load_deep_mlp_model():
     parameters = {}
@@ -42,15 +42,19 @@ def main():
     df_test = df_test.dropna(subset=features + ["label"])
     X_test = df_test[features].values
     y_test = df_test["label"].values
+
     parameters, mu, sigma = load_deep_mlp_model()
-    X_test_norm = normalize_features(X_test, mu, sigma)
+    X_test_norm = (X_test - mu) / sigma  # Manually normalize using loaded mu and sigma
+
     preds = predict_deep_mlp(X_test_norm, parameters)
     accuracy = np.mean(preds == y_test)
     print(f"Test Accuracy: {accuracy * 100:.2f}%")
+    
     classes = [-1, 0, 1]
     cm = compute_confusion_matrix(y_test, preds, classes=classes)
     print("Confusion Matrix:")
     print(pd.DataFrame(cm, index=classes, columns=classes))
+    
     precision, recall, f1_score = compute_classification_metrics(cm, classes=classes)
     print("\nClassification Metrics:")
     print("Class\tPrecision\tRecall\t\tF1-Score")
